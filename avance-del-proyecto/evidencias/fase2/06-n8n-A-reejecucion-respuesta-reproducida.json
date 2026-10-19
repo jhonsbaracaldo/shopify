@@ -1,0 +1,49 @@
+{
+  "workflow": "A - Importación",
+  "backend": "http://host.docker.internal:3000",
+  "generadoEn": "2026-10-19T02:56:18.741Z",
+  "proveedores": [
+    {
+      "supplierId": "mock-us",
+      "statusCode": 200,
+      "totalDisponibles": 10,
+      "error": null
+    }
+  ],
+  "lotesEnviados": 1,
+  "totales": {
+    "failed": 0,
+    "created": 10,
+    "skipped": 0,
+    "updated": 0,
+    "not_found": 0,
+    "requested": 10,
+    "unchanged": 0
+  },
+  "lotes": [
+    {
+      "statusCode": 200,
+      "reproducida": true,
+      "syncRunId": "854cac3e-f2df-493f-9444-5b9f4afbd8e6",
+      "supplierId": "mock-us",
+      "estado": "COMPLETED",
+      "resumen": {
+        "failed": 0,
+        "created": 10,
+        "skipped": 0,
+        "updated": 0,
+        "not_found": 0,
+        "requested": 10,
+        "unchanged": 0
+      },
+      "fallidos": [],
+      "noValidos": [
+        {
+          "externalId": "MUS-1010",
+          "validacion": "INCOMPLETE"
+        }
+      ]
+    }
+  ],
+  "nota": "La normalización, validación y deduplicación las hace el backend (idempotente por proveedor + ID externo)."
+}

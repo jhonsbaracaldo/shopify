@@ -1,0 +1,86 @@
+{
+  "$comment": "Reglas de evaluación de la Fase 2. Valores en USD y porcentajes. Son SUPUESTOS INICIALES a ajustar con datos reales de la tienda: verifique comisiones de su pasarela/plan de Shopify y su CAC real. Cambiar este archivo invalida evaluaciones y aprobaciones previas.",
+  "version": "2026-10-18.1",
+  "pricing": {
+    "targetMarginPercent": 20,
+    "minMarginPercent": 12,
+    "paymentProcessing": {
+      "percent": 2.9,
+      "fixedUsd": 0.3
+    },
+    "returnsReservePercent": 3,
+    "customerAcquisitionCostUsd": 6,
+    "variableCosts": [
+      {
+        "name": "Comisión de transacción de plataforma (supuesto, verificar plan/pasarela)",
+        "type": "percent_of_price",
+        "percent": 1
+      },
+      {
+        "name": "Apps y herramientas prorrateadas por unidad (supuesto)",
+        "type": "fixed",
+        "amountUsd": 0.25
+      }
+    ],
+    "priceEndingCents": 99,
+    "maxRetailPriceUsd": 79.99
+  },
+  "shipping": {
+    "destinationCountry": "US",
+    "allowedOriginCountries": ["US"],
+    "handlingDays": 2,
+    "maxDeliveryDays": 8,
+    "fallbackShippingCostUsd": null
+  },
+  "inventory": {
+    "minStockUnits": 10,
+    "lowStockUnits": 30
+  },
+  "categories": {
+    "blockedKeywords": [
+      "weapon",
+      "knife",
+      "knives",
+      "firearm",
+      "ammunition",
+      "vape",
+      "e-cigarette",
+      "cbd",
+      "tobacco",
+      "drug",
+      "medicine",
+      "prescription",
+      "supplement",
+      "hoverboard",
+      "counterfeit",
+      "replica"
+    ],
+    "reviewKeywords": [
+      "cosmetic",
+      "cosmetics",
+      "skincare",
+      "skin care",
+      "baby",
+      "infant",
+      "children",
+      "kids",
+      "toy",
+      "toys",
+      "food",
+      "pet food",
+      "battery",
+      "lithium",
+      "magnet",
+      "magnetic",
+      "laser",
+      "medical",
+      "helmet",
+      "car seat"
+    ]
+  },
+  "completeness": {
+    "requireDescription": true,
+    "minImages": 1,
+    "requireWeight": true
+  }
+}

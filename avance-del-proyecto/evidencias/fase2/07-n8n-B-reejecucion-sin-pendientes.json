@@ -1,0 +1,159 @@
+{
+  "workflow": "B - Evaluación",
+  "generadoEn": "2026-10-19T02:56:37.669Z",
+  "evaluadosEnEstaEjecucion": 0,
+  "totalesEstaEjecucion": {
+    "evaluated": 0,
+    "unchanged": 0,
+    "not_found": 0,
+    "APPROVED": 0,
+    "REVIEW_REQUIRED": 0,
+    "REJECTED": 0
+  },
+  "aprobadosPorMotor": [
+    {
+      "id": "8276a545-6122-4205-a0b8-89cbeea05aef",
+      "externalId": "MUS-1002",
+      "nombre": "Lámpara LED de escritorio con base de carga inalámbrica",
+      "decisionHumana": "APPROVED",
+      "evaluationId": "fe44b697-34b0-4c30-9c1c-01f653382902",
+      "rangoPrecio": {
+        "min": 37.99,
+        "max": 37.99
+      },
+      "margenMinimoEstimadoPct": 21.64,
+      "hallazgos": []
+    },
+    {
+      "id": "7459dcc5-9b72-4548-9ab2-c302c183cfec",
+      "externalId": "MUS-1001",
+      "nombre": "Soporte ajustable de aluminio para laptop",
+      "decisionHumana": "APPROVED",
+      "evaluationId": "46621e4a-2074-4b55-b8bc-2a267a3a610d",
+      "rangoPrecio": {
+        "min": 29.99,
+        "max": 29.99
+      },
+      "margenMinimoEstimadoPct": 22.07,
+      "hallazgos": []
+    }
+  ],
+  "requierenRevision": [
+    {
+      "id": "c51e5a59-43d8-42fa-9a81-6b66cdf4af31",
+      "externalId": "MUS-1010",
+      "nombre": "Mini proyector portátil 1080p",
+      "decisionHumana": "NONE",
+      "evaluationId": "9e2ad61e-9b7a-4353-b7b7-7043a9a9f5ff",
+      "rangoPrecio": null,
+      "margenMinimoEstimadoPct": null,
+      "hallazgos": [
+        "DATA_COMPLETENESS (REVIEW): información incompleta: descripción, peso de variantes",
+        "AVAILABILITY (REVIEW): cantidad disponible desconocida",
+        "DELIVERY_TIME (REVIEW): plazo de entrega desconocido",
+        "PROFIT_MARGIN (REVIEW): margen entre mínimo y objetivo, o faltan costo/envío para calcularlo"
+      ]
+    },
+    {
+      "id": "ba117a1c-ecc5-4f26-92b2-f9e2b92a5e6f",
+      "externalId": "MUS-1009",
+      "nombre": "Botella térmica 1 L de acero inoxidable",
+      "decisionHumana": "NONE",
+      "evaluationId": "f03b1c97-95ba-4274-b5dc-643a7df9c021",
+      "rangoPrecio": {
+        "min": 25.99,
+        "max": 25.99
+      },
+      "margenMinimoEstimadoPct": 20.2,
+      "hallazgos": [
+        "DUPLICATE_RISK (REVIEW): posible duplicado de: mock-us/MUS-1003 (SAME_NAME_FINGERPRINT)"
+      ]
+    },
+    {
+      "id": "a19f35c7-4226-49df-9b22-21fbb66ee977",
+      "externalId": "MUS-1006",
+      "nombre": "Mochila antirrobo para laptop con puerto USB",
+      "decisionHumana": "NONE",
+      "evaluationId": "42d79342-dbd5-4277-b1d5-556b055c574d",
+      "rangoPrecio": null,
+      "margenMinimoEstimadoPct": null,
+      "hallazgos": [
+        "PROFIT_MARGIN (REVIEW): margen entre mínimo y objetivo, o faltan costo/envío para calcularlo"
+      ]
+    },
+    {
+      "id": "bcaa51c0-d9c2-43d7-80fd-0fb7fbeab001",
+      "externalId": "MUS-1005",
+      "nombre": "Organizador plegable de juguetes",
+      "decisionHumana": "APPROVED",
+      "evaluationId": "c12a39ad-d0c3-4325-a1bf-091b29076aee",
+      "rangoPrecio": {
+        "min": 31.99,
+        "max": 31.99
+      },
+      "margenMinimoEstimadoPct": 20.73,
+      "hallazgos": [
+        "CATEGORY_RESTRICTION (REVIEW): categoría que requiere revisión regulatoria (coincide con \"baby\")"
+      ]
+    }
+  ],
+  "rechazados": [
+    {
+      "id": "c5b35868-1c3d-46ec-bcfe-06a8fac17f55",
+      "externalId": "MUS-1008",
+      "nombre": "Funda de silicona para estuche de audífonos inalámbricos",
+      "decisionHumana": "NONE",
+      "evaluationId": "16740295-7cf9-4b86-a28d-d367d4cfd33a",
+      "rangoPrecio": null,
+      "margenMinimoEstimadoPct": null,
+      "hallazgos": [
+        "DELIVERY_TIME (REJECT): entrega estimada supera 8 días",
+        "PROFIT_MARGIN (SKIPPED): no evaluable: ninguna variante llegó a esta regla"
+      ]
+    },
+    {
+      "id": "38c046bf-2cf5-4aa5-8006-a9b75e496d69",
+      "externalId": "MUS-1007",
+      "nombre": "Silla ergonómica de oficina con soporte lumbar",
+      "decisionHumana": "NONE",
+      "evaluationId": "30d2de46-1838-4535-ae5f-fa4ed6bc7672",
+      "rangoPrecio": null,
+      "margenMinimoEstimadoPct": null,
+      "hallazgos": [
+        "PROFIT_MARGIN (REJECT): margen estimado < mínimo 12.00 % con el precio techo"
+      ]
+    },
+    {
+      "id": "f3f6ecea-0423-4aea-8f02-38e8616e61a6",
+      "externalId": "MUS-1004",
+      "nombre": "Set de cuchillos de cocina 6 piezas",
+      "decisionHumana": "NONE",
+      "evaluationId": "b9f7b2f1-7dc1-4059-85b0-e193ac390fa5",
+      "rangoPrecio": {
+        "min": 46.99,
+        "max": 46.99
+      },
+      "margenMinimoEstimadoPct": 20.86,
+      "hallazgos": [
+        "CATEGORY_RESTRICTION (REJECT): categoría bloqueada (coincide con \"knives\")"
+      ]
+    },
+    {
+      "id": "7232d58e-c7c9-4693-83d1-b9a4a81ff8b2",
+      "externalId": "MUS-1003",
+      "nombre": "Botella térmica de acero inoxidable 1 L",
+      "decisionHumana": "NONE",
+      "evaluationId": "9115107b-4303-4782-90c9-d36820b7008c",
+      "rangoPrecio": null,
+      "margenMinimoEstimadoPct": null,
+      "hallazgos": [
+        "AVAILABILITY (REJECT): agotado o por debajo del mínimo de existencias en bodegas de origen",
+        "DELIVERY_TIME (SKIPPED): no evaluable: ninguna variante llegó a esta regla",
+        "PROFIT_MARGIN (SKIPPED): no evaluable: ninguna variante llegó a esta regla",
+        "DUPLICATE_RISK (REVIEW): posible duplicado de: mock-us/MUS-1009 (SAME_NAME_FINGERPRINT)"
+      ]
+    }
+  ],
+  "recordatorio": "APPROVED del motor NO autoriza publicar. Una persona debe aprobar con APPROVER_API_KEY: POST /api/v1/products/:id/approve.",
+  "nota": "Márgenes y beneficios son estimaciones con los costos configurados; no son ganancias netas definitivas."
+}

@@ -1,0 +1,258 @@
+{
+  "name": "Fase 2 - B - Evaluación y clasificación",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "d62b8309-01e1-49fc-9636-83bfbe51f651",
+      "name": "Ejecutar manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 12
+            }
+          ]
+        }
+      },
+      "id": "e41e3835-437d-4bcf-ae09-6034c095f2bd",
+      "name": "Programación (desactivada)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 200],
+      "disabled": true,
+      "notes": "Actívela para ejecutar cada 12 h y active el workflow. Mientras esté desactivada solo corre manualmente."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4261b234-aeb6-4d57-af63-9777aacbcb29",
+              "name": "baseUrl",
+              "value": "http://host.docker.internal:3000",
+              "type": "string"
+            },
+            {
+              "id": "fa07420b-1d8c-462c-b0c1-e23a463ca37c",
+              "name": "batchSize",
+              "value": 50,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "deb421be-6281-406d-bb5c-75fe075fbabc",
+      "name": "Configuración",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 100],
+      "notes": "batchSize máximo 100. Las reglas (márgenes, costos, categorías) están en config/evaluation-rules.json del backend."
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "url": "={{ $json.baseUrl }}/api/v1/products/candidates",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "evaluation",
+              "value": "PENDING"
+            },
+            {
+              "name": "pageSize",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "53ab7c0e-26cc-473d-b74f-9508f48e6fe2",
+      "name": "Consultar pendientes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 100],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "dropshipBackendAdmin",
+          "name": "Dropship Backend - Admin (X-Api-Key)"
+        }
+      },
+      "notes": "Pendientes = sin evaluación o con evaluación obsoleta (cambió el producto o las reglas)."
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $('Configuración').first().json;\nconst ids = ($input.first().json.data ?? []).map((p) => p.id);\nif (ids.length === 0) return [{ json: { productIds: null, pendientes: 0 } }];\nconst batches = [];\nfor (let i = 0; i < ids.length; i += config.batchSize) batches.push({ json: { productIds: ids.slice(i, i + config.batchSize), pendientes: ids.length } });\nreturn batches;"
+      },
+      "id": "c2571850-0461-46a3-9511-a421531d4cc3",
+      "name": "Lotes de pendientes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 100]
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "url": "={{ $('Configuración').first().json.baseUrl }}/api/v1/products/evaluate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.productIds ? { productIds: $json.productIds } : { limit: 100 }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "0b86a65d-4ede-47e4-8ac8-fc2aff29a397",
+      "name": "Evaluar y guardar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 100],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "dropshipBackendAdmin",
+          "name": "Dropship Backend - Admin (X-Api-Key)"
+        }
+      },
+      "notes": "El backend aplica las reglas de rentabilidad y clasificación y guarda el resultado."
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "url": "={{ $('Configuración').first().json.baseUrl }}/api/v1/products/candidates",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "classification",
+              "value": "APPROVED,REVIEW_REQUIRED,REJECTED"
+            },
+            {
+              "name": "pageSize",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "0783e56e-944d-477b-94fc-fbc187755c82",
+      "name": "Consultar resultados",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 100],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "dropshipBackendAdmin",
+          "name": "Dropship Backend - Admin (X-Api-Key)"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const totales = {};\nfor (const item of $('Evaluar y guardar').all()) for (const [k, v] of Object.entries(item.json.data?.summary ?? {})) totales[k] = (totales[k] ?? 0) + v;\nconst products = $input.first().json.data ?? [];\nconst pick = (classification) => products.filter((p) => p.classification === classification).map((p) => ({\n  id: p.id,\n  externalId: p.externalId,\n  nombre: p.name,\n  decisionHumana: p.approvalState,\n  evaluationId: p.latestEvaluation?.id ?? null,\n  rangoPrecio: p.latestEvaluation?.summary?.priceRange ?? null,\n  margenMinimoEstimadoPct: p.latestEvaluation?.summary?.minEstimatedProfitMarginPercent ?? null,\n  hallazgos: (p.latestEvaluation?.findings ?? []).filter((f) => f.outcome !== 'PASS').map((f) => `${f.rule} (${f.outcome}): ${f.detail}`),\n}));\nreturn [{ json: {\n  workflow: 'B - Evaluación',\n  generadoEn: new Date().toISOString(),\n  evaluadosEnEstaEjecucion: totales.evaluated ?? 0,\n  totalesEstaEjecucion: totales,\n  aprobadosPorMotor: pick('APPROVED'),\n  requierenRevision: pick('REVIEW_REQUIRED'),\n  rechazados: pick('REJECTED'),\n  recordatorio: 'APPROVED del motor NO autoriza publicar. Una persona debe aprobar con APPROVER_API_KEY: POST /api/v1/products/:id/approve.',\n  nota: 'Márgenes y beneficios son estimaciones con los costos configurados; no son ganancias netas definitivas.',\n} }];"
+      },
+      "id": "ff6b30e3-46bf-488d-a2da-508e9e94cded",
+      "name": "Resumen de evaluación",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 100]
+    }
+  ],
+  "connections": {
+    "Ejecutar manualmente": {
+      "main": [
+        [
+          {
+            "node": "Configuración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Programación (desactivada)": {
+      "main": [
+        [
+          {
+            "node": "Configuración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuración": {
+      "main": [
+        [
+          {
+            "node": "Consultar pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar pendientes": {
+      "main": [
+        [
+          {
+            "node": "Lotes de pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lotes de pendientes": {
+      "main": [
+        [
+          {
+            "node": "Evaluar y guardar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluar y guardar": {
+      "main": [
+        [
+          {
+            "node": "Consultar resultados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar resultados": {
+      "main": [
+        [
+          {
+            "node": "Resumen de evaluación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

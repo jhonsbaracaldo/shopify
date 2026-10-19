@@ -1,0 +1,47 @@
+Estado de PostgreSQL (contenedor dropship-postgres, base "dropship") el 2026-10-18.
+Salidas de psql copiadas tal cual de las consultas ejecutadas durante la verificación de la Fase 2.
+
+----------------------------------------------------------------------------------------------
+1) Después de la primera ronda: A (importar) → B (evaluar) → aprobación humana → C (crear borradores)
+----------------------------------------------------------------------------------------------
+
+ productos | variantes | evaluaciones | aprobaciones | sincronizaciones | historial | claves_idem
+-----------+-----------+--------------+--------------+------------------+-----------+-------------
+        10 |        12 |           10 |            2 |                1 |        10 |           3
+
+ external_id |      motor      |  humano  |   reviewer   |    store     | publicacion |     external_product_id
+-------------+-----------------+----------+--------------+--------------+-------------+------------------------------
+ MUS-1001    | APPROVED        | APPROVED | Revisor Demo | shopify:mock | COMPLETED   | gid://mock-shopify/Product/2
+ MUS-1002    | APPROVED        |          |              |              |             |
+ MUS-1003    | REJECTED        |          |              |              |             |
+ MUS-1004    | REJECTED        |          |              |              |             |
+ MUS-1005    | REVIEW_REQUIRED | APPROVED | Revisor Demo | shopify:mock | COMPLETED   | gid://mock-shopify/Product/1
+ MUS-1006    | REVIEW_REQUIRED |          |              |              |             |
+ MUS-1007    | REJECTED        |          |              |              |             |
+ MUS-1008    | REJECTED        |          |              |              |             |
+ MUS-1009    | REVIEW_REQUIRED |          |              |              |             |
+ MUS-1010    | REVIEW_REQUIRED |          |              |              |             |
+
+ Lectura: "motor" = clasificación automática; "humano" = decisión de la persona revisora.
+ MUS-1002 era APPROVED por el motor pero NO se publicó porque nadie lo había aprobado.
+
+         version          |          applied_at
+--------------------------+-------------------------------
+ 0001_initial_catalog.sql | 2026-10-19 02:31:57.334734+00   (hora UTC = 2026-10-18 21:31 en Colombia)
+
+----------------------------------------------------------------------------------------------
+2) Después de la re-ejecución con el build final (MUS-1002 aprobado por una persona y publicado)
+----------------------------------------------------------------------------------------------
+
+ MUS-1001 COMPLETED gid://mock-shopify/Product/2
+ MUS-1002 COMPLETED gid://mock-shopify/Product/1
+ MUS-1005 COMPLETED gid://mock-shopify/Product/1
+
+ Nota: el ID "Product/1" se repite porque la tienda mock vive en memoria y su numeración se reinicia
+ cada vez que arranca el backend; las publicaciones quedan separadas por producto en la base.
+
+ Claves de idempotencia de importación registradas:
+ import-mock-us-1-0                  ← primera versión del workflow A (solo $execution.id)
+ import-mock-us-1-1792378798863-0    ← versión corregida (incluye runId con marca de tiempo)
+
+ Sincronizaciones: 2 · versión máxima de producto: 1 (reimportar sin cambios no crea versiones)

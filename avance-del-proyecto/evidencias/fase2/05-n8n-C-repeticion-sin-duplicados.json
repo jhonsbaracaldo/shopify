@@ -1,0 +1,11 @@
+{
+  "workflow": "C - Preparación para Shopify",
+  "generadoEn": "2026-10-19T02:41:17.994Z",
+  "modo": "crear borradores si el backend lo permite",
+  "tienda": null,
+  "sinProductos": true,
+  "preparados": 0,
+  "creados": 0,
+  "resultados": [],
+  "recordatorio": "Solo se crean borradores (DRAFT). Activar o publicar en Shopify es una acción manual posterior."
+}

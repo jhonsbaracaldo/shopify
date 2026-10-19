@@ -1,0 +1,61 @@
+{
+  "workflow": "C - Preparación para Shopify",
+  "generadoEn": "2026-10-19T02:40:56.523Z",
+  "modo": "solo revisión (dry-run)",
+  "tienda": {
+    "key": "shopify:mock",
+    "mode": "mock",
+    "writeEnabled": true
+  },
+  "sinProductos": false,
+  "preparados": 2,
+  "creados": 0,
+  "resultados": [
+    {
+      "productId": "bcaa51c0-d9c2-43d7-80fd-0fb7fbeab001",
+      "externalId": "MUS-1005",
+      "accion": "skip",
+      "motivo": "createDrafts=false (modo revisión)",
+      "verificaciones": [
+        "HUMAN_APPROVAL: OK — aprobado por Revisor Demo sobre la evaluación c12a39ad-d0c3-4325-a1bf-091b29076aee",
+        "CONTENT_READY: OK — 1 variante(s) elegible(s), estado DRAFT",
+        "NO_EQUIVALENT_IN_STORE: OK — no existe un producto con handle dsp-mock-us-mus-1005"
+      ],
+      "borradorPreparado": {
+        "handle": "dsp-mock-us-mus-1005",
+        "title": "Organizador plegable de juguetes",
+        "status": "DRAFT",
+        "variantes": 1,
+        "precios": [
+          31.99
+        ]
+      },
+      "creacion": null,
+      "error": null
+    },
+    {
+      "productId": "7459dcc5-9b72-4548-9ab2-c302c183cfec",
+      "externalId": "MUS-1001",
+      "accion": "skip",
+      "motivo": "createDrafts=false (modo revisión)",
+      "verificaciones": [
+        "HUMAN_APPROVAL: OK — aprobado por Revisor Demo sobre la evaluación 46621e4a-2074-4b55-b8bc-2a267a3a610d",
+        "CONTENT_READY: OK — 2 variante(s) elegible(s), estado DRAFT",
+        "NO_EQUIVALENT_IN_STORE: OK — no existe un producto con handle dsp-mock-us-mus-1001"
+      ],
+      "borradorPreparado": {
+        "handle": "dsp-mock-us-mus-1001",
+        "title": "Soporte ajustable de aluminio para laptop",
+        "status": "DRAFT",
+        "variantes": 2,
+        "precios": [
+          29.99,
+          29.99
+        ]
+      },
+      "creacion": null,
+      "error": null
+    }
+  ],
+  "recordatorio": "Solo se crean borradores (DRAFT). Activar o publicar en Shopify es una acción manual posterior."
+}
