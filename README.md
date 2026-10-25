@@ -513,7 +513,7 @@ npm run typecheck → OK · npm run lint → OK · npm run format:check → OK �
 5. Pantalla de revisión y aprobación (o formulario de n8n) con usuarios individuales en lugar de una clave compartida.
 6. Sales tax por estado, conversión COP/USD y reportes de rentabilidad real frente a la estimada.
 7. Copias de seguridad de PostgreSQL, métricas, alertas (Error Trigger de n8n) y CI con Git.
+
 # Ampliación Fase 3 (2026-10-19)
 
 Se añadió una base de comercio con webhooks, cola PostgreSQL, estados, propuestas de precios y preparación simulada. **Pendiente de compilar y ejecutar pruebas en este equipo; las escrituras comerciales reales no están implementadas.** Auditoría, instalación, límites y configuración manual: [docs/fase-3.md](docs/fase-3.md). Los resultados históricos de Fase 2 de este documento no validan esta ampliación.
-

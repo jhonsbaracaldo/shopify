@@ -1,1 +1,29 @@
-{"name":"G-seguimiento","active":false,"nodes":[{"parameters":{},"id":"manual","name":"Manual","type":"n8n-nodes-base.manualTrigger","typeVersion":1,"position":[0,0]},{"parameters":{"method":"POST","url":"http://host.docker.internal:3000/api/v1/commerce/jobs/tracking","authentication":"genericCredentialType","genericAuthType":"httpHeaderAuth","options":{"timeout":120000}},"id":"backend","name":"Backend","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[240,0]}],"connections":{"Manual":{"main":[[{"node":"Backend","type":"main","index":0}]]}}}
+{
+  "name": "G-seguimiento",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual",
+      "name": "Manual",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3000/api/v1/commerce/jobs/tracking",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": { "timeout": 120000 }
+      },
+      "id": "backend",
+      "name": "Backend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 0]
+    }
+  ],
+  "connections": { "Manual": { "main": [[{ "node": "Backend", "type": "main", "index": 0 }]] } }
+}
