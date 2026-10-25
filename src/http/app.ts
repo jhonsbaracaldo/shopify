@@ -12,6 +12,9 @@ import { registerErrorHandling } from './errors.js';
 import { catalogRoutes, createCatalogEvaluateHandler } from './routes/catalog.js';
 import { healthRoutes } from './routes/health.js';
 import { productRoutes } from './routes/products.js';
+import { CommerceService } from '../commerce/service.js';
+import { commerceRoutes } from '../commerce/routes.js';
+import { PostgresPersistence } from '../adapters/persistence/postgres/postgres-persistence.js';
 
 export const SERVICE_NAME = 'dropshipping-automation-backend';
 export const SERVICE_VERSION = '0.2.0';
@@ -105,6 +108,20 @@ export async function buildApp({
   });
   if (catalogContext) {
     await app.register(catalogRoutes, { prefix: '/api/v1', ctx: catalogContext, auth });
+    if (config.COMMERCE_ENABLED) {
+      if (!(catalogContext.persistence instanceof PostgresPersistence)) throw new Error('Commerce requires PostgreSQL');
+      const service = new CommerceService(catalogContext.persistence.rawPool, Buffer.from(config.COMMERCE_ENCRYPTION_KEY!, 'hex'), catalogContext);
+      await app.register(commerceRoutes,{service,auth,shop:config.SHOPIFY_STORE_DOMAIN!,secret:config.SHOPIFY_WEBHOOK_SECRET!});
+      let running = false;
+      let task: Promise<unknown> = Promise.resolve();
+      const timer = setInterval(() => {
+        if(running) return;
+        running=true;
+        task = service.processOne().catch(()=>app.log.error({code:'COMMERCE_WORKER_FAILED'},'Commerce worker failed')).finally(()=>{running=false;});
+      },1000);
+      timer.unref();
+      app.addHook('onClose',async()=>{clearInterval(timer);await task;});
+    }
   }
 
   return app;

@@ -88,8 +88,16 @@ const envSchema = z
     SHOPIFY_WRITE_ENABLED: bool(false),
     SHOPIFY_TIMEOUT_MS: z.coerce.number().int().min(1000).max(120_000).default(20_000),
     STORE_VENDOR_NAME: optional(z.string().trim().max(100)),
+    COMMERCE_ENABLED: bool(false),
+    SHOPIFY_WEBHOOK_SECRET: secret(20),
+    COMMERCE_ENCRYPTION_KEY: optional(z.string().regex(/^[a-fA-F0-9]{64}$/)),
   })
   .superRefine((env, ctx) => {
+    if (env.COMMERCE_ENABLED) {
+      for (const name of ['DATABASE_URL','SHOPIFY_STORE_DOMAIN','SHOPIFY_WEBHOOK_SECRET','COMMERCE_ENCRYPTION_KEY','ADMIN_API_KEY','APPROVER_API_KEY'] as const) {
+        if (!env[name]) ctx.addIssue({code:'custom',path:[name],message:'obligatoria cuando COMMERCE_ENABLED=true'});
+      }
+    }
     if (env.ADMIN_API_KEY && env.ADMIN_API_KEY === env.APPROVER_API_KEY) {
       ctx.addIssue({
         code: 'custom',
