@@ -1,0 +1,61 @@
+{
+  "workflow": "C - Preparación para Shopify",
+  "generadoEn": "2026-10-19T02:56:57.091Z",
+  "modo": "crear borradores si el backend lo permite",
+  "tienda": {
+    "key": "shopify:mock",
+    "mode": "mock",
+    "writeEnabled": true
+  },
+  "sinProductos": false,
+  "preparados": 1,
+  "creados": 1,
+  "resultados": [
+    {
+      "productId": "8276a545-6122-4205-a0b8-89cbeea05aef",
+      "externalId": "MUS-1002",
+      "accion": "create",
+      "motivo": null,
+      "verificaciones": [
+        "HUMAN_APPROVAL: OK — aprobado por Revisor Demo sobre la evaluación fe44b697-34b0-4c30-9c1c-01f653382902",
+        "CONTENT_READY: OK — 1 variante(s) elegible(s), estado DRAFT",
+        "NO_EQUIVALENT_IN_STORE: OK — no existe un producto con handle dsp-mock-us-mus-1002"
+      ],
+      "borradorPreparado": {
+        "handle": "dsp-mock-us-mus-1002",
+        "title": "Lámpara LED de escritorio con base de carga inalámbrica",
+        "status": "DRAFT",
+        "variantes": 1,
+        "precios": [
+          37.99
+        ]
+      },
+      "creacion": {
+        "statusCode": 201,
+        "outcome": "CREATED",
+        "storeProduct": {
+          "id": "gid://mock-shopify/Product/1",
+          "handle": "dsp-mock-us-mus-1002",
+          "title": "Lámpara LED de escritorio con base de carga inalámbrica",
+          "status": "DRAFT",
+          "variantsCount": 1,
+          "adminUrl": null
+        },
+        "publication": {
+          "id": "9b4234f4-bffe-4586-82bf-f7390b023784",
+          "store": "shopify:mock",
+          "status": "COMPLETED",
+          "stage": "DONE",
+          "handle": "dsp-mock-us-mus-1002",
+          "externalProductId": "gid://mock-shopify/Product/1",
+          "attempts": 1,
+          "lastError": null,
+          "updatedAt": "2026-10-19T02:56:56.891Z"
+        },
+        "error": null
+      },
+      "error": null
+    }
+  ],
+  "recordatorio": "Solo se crean borradores (DRAFT). Activar o publicar en Shopify es una acción manual posterior."
+}

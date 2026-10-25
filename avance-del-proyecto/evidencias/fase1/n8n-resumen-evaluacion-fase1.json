@@ -1,0 +1,97 @@
+{
+  "generadoEn": "2026-10-19T01:28:20.109Z",
+  "backend": "http://host.docker.internal:3000",
+  "margenObjetivoPct": 30,
+  "totalEvaluados": 5,
+  "cumplenMargenMinimo": [
+    "DEMO-AUTO-001",
+    "DEMO-HLTH-002",
+    "DEMO-KTCH-004",
+    "DEMO-KTCH-005"
+  ],
+  "noCumplenMargenMinimo": [
+    "DEMO-HOME-003"
+  ],
+  "totalElegibles": 2,
+  "totalDescartados": 3,
+  "elegibles": [
+    {
+      "sku": "DEMO-AUTO-001",
+      "nombre": "Soporte magnético de celular para auto",
+      "precioVenta": 19.99,
+      "costoTotal": 8.15,
+      "gananciaBruta": 11.84,
+      "margenBrutoPct": 59.23,
+      "precioMinimoRecomendado": 11.65,
+      "cumpleMargenMinimo": true,
+      "elegible": true,
+      "motivosDescarte": [],
+      "advertencias": []
+    },
+    {
+      "sku": "DEMO-HLTH-002",
+      "nombre": "Corrector de postura ajustable",
+      "precioVenta": 24.99,
+      "costoTotal": 15.3,
+      "gananciaBruta": 9.69,
+      "margenBrutoPct": 38.78,
+      "precioMinimoRecomendado": 21.86,
+      "cumpleMargenMinimo": true,
+      "elegible": true,
+      "motivosDescarte": [],
+      "advertencias": [
+        "Inventario bajo en el proveedor: verificar antes de publicar"
+      ]
+    }
+  ],
+  "descartados": [
+    {
+      "sku": "DEMO-HOME-003",
+      "nombre": "Tira LED RGB de 5 m con control por app",
+      "precioVenta": 22.99,
+      "costoTotal": 17.75,
+      "gananciaBruta": 5.24,
+      "margenBrutoPct": 22.79,
+      "precioMinimoRecomendado": 25.36,
+      "cumpleMargenMinimo": false,
+      "elegible": false,
+      "motivosDescarte": [
+        "MIN_GROSS_MARGIN: Margen bruto 22.79 % < objetivo 30.00 %"
+      ],
+      "advertencias": [
+        "Para alcanzar el margen objetivo el precio debería ser al menos 25.36 USD"
+      ]
+    },
+    {
+      "sku": "DEMO-KTCH-004",
+      "nombre": "Botella térmica de acero inoxidable 32 oz",
+      "precioVenta": 29.99,
+      "costoTotal": 15.5,
+      "gananciaBruta": 14.49,
+      "margenBrutoPct": 48.32,
+      "precioMinimoRecomendado": 22.15,
+      "cumpleMargenMinimo": true,
+      "elegible": false,
+      "motivosDescarte": [
+        "AVAILABILITY: Sin inventario disponible en el proveedor"
+      ],
+      "advertencias": []
+    },
+    {
+      "sku": "DEMO-KTCH-005",
+      "nombre": "Licuadora portátil recargable USB-C",
+      "precioVenta": 39.99,
+      "costoTotal": 20.7,
+      "gananciaBruta": 19.29,
+      "margenBrutoPct": 48.24,
+      "precioMinimoRecomendado": 29.58,
+      "cumpleMargenMinimo": true,
+      "elegible": false,
+      "motivosDescarte": [
+        "DELIVERY_TIME: Entrega estimada 6-10 días; máximo permitido 7"
+      ],
+      "advertencias": []
+    }
+  ],
+  "nota": "Márgenes BRUTOS: no incluyen publicidad, comisiones de Shopify/pasarela, impuestos ni devoluciones."
+}

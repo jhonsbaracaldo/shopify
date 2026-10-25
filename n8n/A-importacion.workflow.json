@@ -1,0 +1,343 @@
+{
+  "name": "Fase 2 - A - Importación de productos",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "8d192b58-967e-4856-9286-5755bbaa17fd",
+      "name": "Ejecutar manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "f9194889-4cb2-4dd0-bf06-e942cb027ae4",
+      "name": "Programación (desactivada)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 200],
+      "disabled": true,
+      "notes": "Actívela para ejecutar cada 6 h y active el workflow. Mientras esté desactivada solo corre manualmente."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2559ba72-afc0-46b4-8cc9-fe1af52cdfb4",
+              "name": "baseUrl",
+              "value": "http://host.docker.internal:3000",
+              "type": "string"
+            },
+            {
+              "id": "56aa9cbd-2893-453d-9c84-e6a5c55162c3",
+              "name": "shipsFrom",
+              "value": "US",
+              "type": "string"
+            },
+            {
+              "id": "422334ac-25b1-45be-9e0e-d889c607a42b",
+              "name": "pageSize",
+              "value": 20,
+              "type": "number"
+            },
+            {
+              "id": "04223586-5fa0-4672-85a0-82a77d70d9ad",
+              "name": "batchSize",
+              "value": 10,
+              "type": "number"
+            },
+            {
+              "id": "f791f18a-d611-4660-9a28-15f4d734220f",
+              "name": "runId",
+              "value": "={{ $execution.id }}-{{ $now.toMillis() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e333d905-6397-41a5-8c08-61e7cb26a31d",
+      "name": "Configuración",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 100],
+      "notes": "baseUrl usa host.docker.internal (n8n en Docker, backend en Windows). batchSize máximo 50. runId (calculado una vez por ejecución) hace única la Idempotency-Key aunque n8n reutilice IDs de ejecución."
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "url": "={{ $json.baseUrl }}/api/v1/suppliers",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "9ac2bec9-e4f7-4345-8e49-845f883d8ba8",
+      "name": "Consultar proveedores",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 100],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "dropshipBackendAdmin",
+          "name": "Dropship Backend - Admin (X-Api-Key)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Orquestación: solo se consultan proveedores habilitados y con credenciales.\nconst suppliers = $input.first().json.data ?? [];\nreturn suppliers.filter((s) => s.enabled && s.configured).map((s) => ({ json: { supplierId: s.id, name: s.name, kind: s.kind } }));"
+      },
+      "id": "5593f6c9-ca7d-43b2-885e-787a6b0da0da",
+      "name": "Proveedores habilitados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 100],
+      "notes": "Si ningún proveedor está habilitado y configurado, el flujo termina aquí."
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "url": "={{ $('Configuración').first().json.baseUrl }}/api/v1/suppliers/{{ $json.supplierId }}/products",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "shipsFrom",
+              "value": "={{ $('Configuración').first().json.shipsFrom }}"
+            },
+            {
+              "name": "pageSize",
+              "value": "={{ $('Configuración').first().json.pageSize }}"
+            },
+            {
+              "name": "page",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "daf30cb2-5fbf-4f55-b08e-5273031b26ac",
+      "name": "Obtener productos del proveedor",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 100],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "dropshipBackendAdmin",
+          "name": "Dropship Backend - Admin (X-Api-Key)"
+        }
+      },
+      "notes": "Una llamada por proveedor. Los errores (p. ej. 503 sin credenciales) se registran en el resumen."
+    },
+    {
+      "parameters": {
+        "jsCode": "// \"Normalización\" en n8n = solo dar forma a la solicitud (lotes de IDs externos).\n// La normalización real del catálogo y sus validaciones las hace el backend.\nconst config = $('Configuración').first().json;\nconst suppliers = $('Proveedores habilitados').all();\nconst batches = [];\n$input.all().forEach((item, index) => {\n  const supplierId = suppliers[index]?.json.supplierId;\n  if (item.json.statusCode !== 200) return;\n  const ids = (item.json.body?.data ?? []).map((p) => p.externalId).filter(Boolean);\n  for (let i = 0; i < ids.length; i += config.batchSize) {\n    batches.push({ json: { kind: 'batch', supplierId, externalProductIds: ids.slice(i, i + config.batchSize), idempotencyKey: `import-${supplierId}-${config.runId}-${i / config.batchSize}` } });\n  }\n});\nreturn batches.length > 0 ? batches : [{ json: { kind: 'none', message: 'No hay productos para importar' } }];"
+      },
+      "id": "9b536c12-872e-4b7b-8410-0f1cd1f10041",
+      "name": "Preparar lotes de importación",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 100]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "b74f77e8-3672-4d56-bcc7-80c0efa83975",
+              "leftValue": "={{ $json.kind }}",
+              "rightValue": "batch",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "aa2961fc-1bc0-4224-ace0-c81f178e1d74",
+      "name": "¿Hay lotes?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1320, 0]
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "url": "={{ $('Configuración').first().json.baseUrl }}/api/v1/products/import",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $json.idempotencyKey }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ supplierId: $json.supplierId, externalProductIds: $json.externalProductIds }) }}",
+        "options": {
+          "timeout": 600000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "c7c633d1-eab0-4b76-82ab-70fb10c558ca",
+      "name": "Importar en backend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1540, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "dropshipBackendAdmin",
+          "name": "Dropship Backend - Admin (X-Api-Key)"
+        }
+      },
+      "notes": "Idempotency-Key por lote y ejecución. Con CJ (1 req/s) un lote puede tardar varios minutos."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Rama inferior: se ejecuta después de la importación (orden de ejecución v1).\nconst safeAll = (name) => { try { return $(name).all(); } catch (error) { return []; } };\nconst config = $('Configuración').first().json;\nconst suppliers = $('Proveedores habilitados').all();\nconst proveedores = safeAll('Obtener productos del proveedor').map((item, index) => ({\n  supplierId: suppliers[index]?.json.supplierId ?? null,\n  statusCode: item.json.statusCode,\n  totalDisponibles: item.json.body?.pagination?.total ?? null,\n  error: item.json.statusCode === 200 ? null : (item.json.body?.error ?? item.json.body ?? null),\n}));\nconst lotes = safeAll('Importar en backend').map((item) => {\n  const data = item.json.body?.data;\n  if (item.json.statusCode !== 200 || !data) return { statusCode: item.json.statusCode, error: item.json.body?.error ?? item.json.body ?? null };\n  return {\n    statusCode: item.json.statusCode,\n    reproducida: item.json.headers?.['idempotent-replayed'] === 'true',\n    syncRunId: data.syncRunId,\n    supplierId: data.supplierId,\n    estado: data.status,\n    resumen: data.summary,\n    fallidos: data.items.filter((x) => x.error).map((x) => ({ externalId: x.externalId, codigo: x.error.code, reintentable: x.error.retryable })),\n    noValidos: data.items.filter((x) => x.validationStatus && x.validationStatus !== 'VALID').map((x) => ({ externalId: x.externalId, validacion: x.validationStatus })),\n  };\n});\nconst totales = {};\nfor (const lote of lotes) for (const [k, v] of Object.entries(lote.resumen ?? {})) totales[k] = (totales[k] ?? 0) + v;\nreturn [{ json: { workflow: 'A - Importación', backend: config.baseUrl, generadoEn: new Date().toISOString(), proveedores, lotesEnviados: lotes.length, totales, lotes, nota: 'La normalización, validación y deduplicación las hace el backend (idempotente por proveedor + ID externo).' } }];"
+      },
+      "id": "405cd1ec-4c6a-4644-9dff-68afe016896d",
+      "name": "Registrar resultados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 300]
+    }
+  ],
+  "connections": {
+    "Ejecutar manualmente": {
+      "main": [
+        [
+          {
+            "node": "Configuración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Programación (desactivada)": {
+      "main": [
+        [
+          {
+            "node": "Configuración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuración": {
+      "main": [
+        [
+          {
+            "node": "Consultar proveedores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar proveedores": {
+      "main": [
+        [
+          {
+            "node": "Proveedores habilitados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Proveedores habilitados": {
+      "main": [
+        [
+          {
+            "node": "Obtener productos del proveedor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener productos del proveedor": {
+      "main": [
+        [
+          {
+            "node": "Preparar lotes de importación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar lotes de importación": {
+      "main": [
+        [
+          {
+            "node": "¿Hay lotes?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Registrar resultados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay lotes?": {
+      "main": [
+        [
+          {
+            "node": "Importar en backend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

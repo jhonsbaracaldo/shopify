@@ -1,0 +1,17 @@
+Verificación ejecutada el 2026-10-19 15:09 en C:\shopify
+Node v22.15.0 · npm 11.3.0
+
+== npm run typecheck
+código de salida 0 (0 = OK)
+== npm run lint
+código de salida 0 (0 = OK)
+== npm run format:check
+código de salida 0 (0 = OK)
+== npm run build
+código de salida 0 (0 = OK)
+
+== npm test — Docker Desktop estaba apagado: sin TEST_DATABASE_URL la suite PostgreSQL se omite (1 skipped).
+   Última ejecución con PostgreSQL real: 2026-10-18, 217/217 en 5 corridas seguidas sin fallos.
+código de salida 0
+ Test Files  17 passed | 1 skipped (18)
+      Tests  202 passed | 1 skipped (203)

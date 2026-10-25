@@ -1,0 +1,345 @@
+{
+  "name": "Fase 2 - C - Preparación de borradores en Shopify",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "97a466a4-4d1b-45db-874f-abbb16b10c38",
+      "name": "Ejecutar manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 100]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "65f941f3-86d9-40b8-ad46-d2ae06f9875c",
+              "name": "baseUrl",
+              "value": "http://host.docker.internal:3000",
+              "type": "string"
+            },
+            {
+              "id": "ba46ae85-a7a9-47da-92e3-2ed6b246d0a8",
+              "name": "createDrafts",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "af0160bf-1e8f-4366-8d6b-216e089c95d0",
+              "name": "pageSize",
+              "value": 50,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "18919589-7a5d-454a-bb54-4a6c2ffb6101",
+      "name": "Configuración",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 100],
+      "notes": "createDrafts=false (por defecto): solo valida y prepara (dry-run). En true crea BORRADORES si el backend tiene la tienda y la escritura habilitadas."
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "url": "={{ $json.baseUrl }}/api/v1/products/candidates",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "approval",
+              "value": "APPROVED"
+            },
+            {
+              "name": "publication",
+              "value": "NONE,FAILED,PRODUCT_CREATED"
+            },
+            {
+              "name": "pageSize",
+              "value": "={{ $json.pageSize }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "b0354973-716a-4d37-9fc6-9c77d4e15a73",
+      "name": "Aprobados por una persona",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 100],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "dropshipBackendAdmin",
+          "name": "Dropship Backend - Admin (X-Api-Key)"
+        }
+      },
+      "notes": "approval=APPROVED es la decisión HUMANA vigente (no la clasificación del motor)."
+    },
+    {
+      "parameters": {
+        "jsCode": "const products = $input.first().json.data ?? [];\nif (products.length === 0) return [{ json: { kind: 'none', message: 'No hay productos aprobados por una persona pendientes de publicar' } }];\nreturn products.map((p) => ({ json: { kind: 'product', id: p.id, externalId: p.externalId, name: p.name, approvalId: p.approval?.id ?? null, publicationStatus: p.publicationStatus } }));"
+      },
+      "id": "31ea85bf-dde2-475d-9b26-a19bc45b8191",
+      "name": "Separar aprobados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 100]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "ad12713f-7bd2-4a48-ab8a-f30a9eacd9a4",
+              "leftValue": "={{ $json.kind }}",
+              "rightValue": "product",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8ad37b4b-5042-4c78-b3b9-a77ce2819240",
+      "name": "¿Hay productos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [880, 0]
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "url": "={{ $('Configuración').first().json.baseUrl }}/api/v1/products/{{ $json.id }}/shopify/draft",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"dryRun\": true}",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "6ebe9c75-fc10-4457-bb1b-95fc21babd4c",
+      "name": "Validar y preparar (dry-run)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "dropshipBackendAdmin",
+          "name": "Dropship Backend - Admin (X-Api-Key)"
+        }
+      },
+      "notes": "Valida aprobación e información requerida, busca un producto equivalente en la tienda y prepara el contenido. No escribe."
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $('Configuración').first().json;\nconst products = $('¿Hay productos?').all();\nreturn $input.all().map((item, index) => {\n  const product = products[index]?.json ?? {};\n  const data = item.json.body?.data;\n  const ok = item.json.statusCode === 200 && data?.outcome === 'DRY_RUN';\n  const ready = ok && data.checks.every((c) => c.passed);\n  const writable = ok && data.store.mode !== 'disabled' && data.store.writeEnabled === true;\n  const action = config.createDrafts === true && ready && writable ? 'create' : 'skip';\n  const motivo = action === 'create' ? null\n    : !ok ? (data?.outcome === 'ALREADY_EXISTS' ? 'ya existe el borrador' : 'el dry-run devolvió un error')\n    : !ready ? 'no supera las verificaciones'\n    : !writable ? 'tienda o escritura deshabilitada en el backend'\n    : 'createDrafts=false (modo revisión)';\n  return { json: {\n    action, motivo, ready,\n    productId: product.id, externalId: product.externalId, approvalId: product.approvalId,\n    statusCode: item.json.statusCode,\n    store: data?.store ?? null,\n    checks: data?.checks ?? null,\n    draft: data?.draft ? { handle: data.draft.handle, title: data.draft.title, status: data.draft.status, variantes: data.draft.variants.length, precios: data.draft.variants.map((v) => v.price) } : null,\n    equivalentStoreProduct: data?.equivalentStoreProduct ?? null,\n    error: ok ? null : (item.json.body?.error ?? data ?? null),\n    idempotencyKey: `draft-${product.id}-${product.approvalId}`,\n  } };\n});"
+      },
+      "id": "80c3d854-ce30-4174-90c9-801002c570a4",
+      "name": "Decidir creación",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "5924043f-8b72-4d7b-adac-ddba79f1ad5a",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "create",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "af067807-4989-41d9-ab09-15bd2bd43fb6",
+      "name": "¿Crear borrador?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1540, 0]
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "url": "={{ $('Configuración').first().json.baseUrl }}/api/v1/products/{{ $json.productId }}/shopify/draft",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $json.idempotencyKey }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"dryRun\": false, \"confirm\": true}",
+        "options": {
+          "timeout": 120000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "3b65e8d1-ca15-47bb-8757-3281da46be38",
+      "name": "Crear borrador en Shopify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1760, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "dropshipBackendAdmin",
+          "name": "Dropship Backend - Admin (X-Api-Key)"
+        }
+      },
+      "notes": "Solo crea productos en estado DRAFT. En modo live el backend exige además SHOPIFY_WRITE_ENABLED=true."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Rama inferior: se ejecuta después de la rama de creación (orden de ejecución v1).\nconst safeAll = (name) => { try { return $(name).all(); } catch (error) { return []; } };\nconst config = $('Configuración').first().json;\nconst decisions = safeAll('Decidir creación').map((i) => i.json);\nconst toCreate = decisions.filter((d) => d.action === 'create');\nconst creations = {};\nsafeAll('Crear borrador en Shopify').forEach((item, index) => {\n  const d = toCreate[index];\n  if (d) creations[d.productId] = { statusCode: item.json.statusCode, outcome: item.json.body?.data?.outcome ?? null, storeProduct: item.json.body?.data?.storeProduct ?? null, publication: item.json.body?.data?.publication ?? null, error: item.json.body?.error ?? null };\n});\nconst resultados = decisions.map((d) => ({\n  productId: d.productId,\n  externalId: d.externalId,\n  accion: d.action,\n  motivo: d.motivo,\n  verificaciones: (d.checks ?? []).map((c) => `${c.name}: ${c.passed ? 'OK' : 'NO'} — ${c.detail}`),\n  borradorPreparado: d.draft,\n  creacion: creations[d.productId] ?? null,\n  error: d.error,\n}));\nreturn [{ json: {\n  workflow: 'C - Preparación para Shopify',\n  generadoEn: new Date().toISOString(),\n  modo: config.createDrafts ? 'crear borradores si el backend lo permite' : 'solo revisión (dry-run)',\n  tienda: decisions[0]?.store ?? null,\n  sinProductos: $input.first().json.kind === 'none',\n  preparados: decisions.filter((d) => d.ready).length,\n  creados: Object.values(creations).filter((c) => c.outcome === 'CREATED').length,\n  resultados,\n  recordatorio: 'Solo se crean borradores (DRAFT). Activar o publicar en Shopify es una acción manual posterior.',\n} }];"
+      },
+      "id": "05fb8845-c6bc-4311-be9c-ffd5cf0abf56",
+      "name": "Registrar resultados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 300]
+    }
+  ],
+  "connections": {
+    "Ejecutar manualmente": {
+      "main": [
+        [
+          {
+            "node": "Configuración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuración": {
+      "main": [
+        [
+          {
+            "node": "Aprobados por una persona",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aprobados por una persona": {
+      "main": [
+        [
+          {
+            "node": "Separar aprobados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar aprobados": {
+      "main": [
+        [
+          {
+            "node": "¿Hay productos?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Registrar resultados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay productos?": {
+      "main": [
+        [
+          {
+            "node": "Validar y preparar (dry-run)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar y preparar (dry-run)": {
+      "main": [
+        [
+          {
+            "node": "Decidir creación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decidir creación": {
+      "main": [
+        [
+          {
+            "node": "¿Crear borrador?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Crear borrador?": {
+      "main": [
+        [
+          {
+            "node": "Crear borrador en Shopify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
